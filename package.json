@@ -8,5 +8,8 @@
   },
   "author": "Joel McCune <joel.mccune@gmail.com>",
   "license": "ISC",
-  "dependencies": {}
+  "dependencies": {
+    "bluebird": "^3.2.2",
+    "request": "^2.69.0"
+  }
 }
