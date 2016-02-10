@@ -1,7 +1,7 @@
 /* global require */
 
 // import modules
-var usgs = require('./usgs');
+var usgs = require('./usgsd');
 
 // variables for testing
 var gaugeId = 12134500;
