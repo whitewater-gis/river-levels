@@ -8,7 +8,7 @@ var get12HourGauge = require('./usgs').get12HourGauge;
 exports.handler = function(event, context){
 
   // call the method with the input event, get the observation result and process using the callback
-  get12HourGauge(event, function(response){
+  get12HourGauge(event.gaugeid, function(response){
 
     // return the gauge observation
     context.succeed(response);

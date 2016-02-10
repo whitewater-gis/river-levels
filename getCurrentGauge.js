@@ -8,7 +8,7 @@ var getCurrentGauge = require('./usgs').getCurrentGauge;
 exports.handler = function(event, context){
 
   // call the method with the input event, get the observation result and process using the callback
-  getCurrentGauge(event, function(response){
+  getCurrentGauge(event.gaugeid, function(response){
 
     // return the gauge observation
     context.succeed(response);
