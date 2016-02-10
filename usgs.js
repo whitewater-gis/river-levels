@@ -1,4 +1,4 @@
-/* global require */
+/* global require, module */
 
 // import modules
 var request = require('request');
@@ -10,9 +10,12 @@ var processResponse = function(usgsJson, callback){
   var timeSeries = usgsJson.value.timeSeries;
 
   // variable to store observation, starting with the datetime stamp of the observation
-  var observation = {
-    gaugeId: timeSeries[0].sourceInfo.siteCode[0].value,
-    dateTime: new Date(Date.parse(timeSeries[0].values[0].value[0].dateTime))
+  var gaugeResponse = {
+    gaugeid: timeSeries[0].sourceInfo.siteCode[0].value,
+    parameters: {
+      cfs: [],
+      ft: []
+    }
   };
 
   // iterate the timeseries array
@@ -21,24 +24,40 @@ var processResponse = function(usgsJson, callback){
     // if it is a cfs reading
     if (timeSeries[i].variable.variableCode[0].value === '00060') {
 
-      // record the observation as the cfs property of the object
-      observation.cfs = parseInt(timeSeries[i].values[0].value[0].value);
+      // iterate the series of values
+      for (var c = 0; c < timeSeries[i].values[0].value.length; c++) {
+
+        // create an object with the datetime and observation, and add it to the response
+        gaugeResponse.parameters.cfs.push({
+          datetime: new Date(Date.parse(timeSeries[i].values[0].value[c].dateTime)),
+          value: parseInt(timeSeries[i].values[0].value[c].value)
+        });
+
+      }
 
       // otherwise, if it is a foot reading
     } else if (timeSeries[i].variable.variableCode[0].value === '00065') {
 
-      // record the observation as the ft property of the object
-      observation.ft = parseFloat(timeSeries[i].values[0].value[0].value);
+      // iterate the series of values
+      for (var f = 0; f < timeSeries[i].values[0].value.length; f++) {
+
+        // create an object with the datetime and observation, and add it to the response
+        gaugeResponse.parameters.ft.push({
+          datetime: new Date(Date.parse(timeSeries[i].values[0].value[f].dateTime)),
+          value: parseFloat(timeSeries[i].values[0].value[f].value)
+        });
+
+      }
     }
   }
 
   // pass the gague information into the callback
-  callback(observation);
+  callback(gaugeResponse);
 
 };
 
-// get current gauge stage
-var getCurrentGauge = function (gaugeId, callback) {
+// get gauge stage
+var getGauge = function (gaugeId, gaugePeriod, callback) {
 
   // create request options
   var options = {
@@ -46,7 +65,7 @@ var getCurrentGauge = function (gaugeId, callback) {
     uri: 'http://waterservices.usgs.gov/nwis/iv/nwis/iv/',
     qs: {
       format: 'json',
-      sites: gaugeId,
+      sites: gaugeId.toString(),
       parameterCd: '00060,00065'
     },
     headers: {
@@ -54,6 +73,11 @@ var getCurrentGauge = function (gaugeId, callback) {
     },
     json: true
   };
+
+  // if a gauge period is specified, add the query parameter
+  if (gaugePeriod.length || gaugePeriod) {
+    options.qs.period = gaugePeriod
+  }
 
   // make the request
   request(options, function (err, res, body) {
@@ -63,5 +87,30 @@ var getCurrentGauge = function (gaugeId, callback) {
   });
 };
 
-// make the get gauge available
-exports.getCurrentGauge = getCurrentGauge;
+// get current gauge stage
+var getCurrentGauge = function(gaugeId, callback){
+
+  // call get gauge with blank gauge period, getting the default response of the most current observation
+  getGauge(gaugeId, '', callback);
+};
+
+// get last six hours
+var get06HourGauge = function(gaugeId, callback) {
+
+  // call to get gauge readings for last six hours
+  getGauge(gaugeId, 'PT6H', callback);
+};
+
+// get last 12 hours
+var get12HourGauge = function(gaugeId, callback) {
+
+  // call to get gauge readings for last twelve hours
+  getGauge(gaugeId, 'PT12H', callback);
+};
+
+// make the right methods available
+module.exports = {
+  getCurrentGauge: getCurrentGauge,
+  get06HourGauge: get06HourGauge,
+  get12HourGauge: get12HourGauge
+};

@@ -78,3 +78,6 @@ node_modules
 
 # where I store test data
 resources
+
+# build folder
+build

@@ -2,13 +2,13 @@
 'use strict';
 
 // import module and function
-var getCurrentGauge = require('./usgs').getCurrentGauge;
+var get06HourGauge = require('./usgs').get06HourGauge;
 
 // expose capability and hand in the event (input data) and context object for AWS Lambda
 exports.handler = function(event, context){
 
   // call the method with the input event, get the observation result and process using the callback
-  getCurrentGauge(event, function(response){
+  get06HourGauge(event, function(response){
 
     // return the gauge observation
     context.succeed(response);
