@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "bluebird": "^3.2.2",
-    "request": "^2.69.0"
+    "request": "^2.69.0",
+    "underscore": "^1.8.3",
+    "url-parse": "^1.0.5"
   }
 }

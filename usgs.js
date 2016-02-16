@@ -51,7 +51,7 @@ var processResponse = function(usgsJson, callback){
     }
   }
 
-  // pass the gague information into the callback
+  // pass the gauge information into the callback
   callback(gaugeResponse);
 
 };
