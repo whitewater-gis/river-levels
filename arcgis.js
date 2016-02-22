@@ -3,6 +3,7 @@
 // import modules
 var request = require('request');
 var aw = require('./aw');
+var arcgisSecurity = require('./arcgisSecurity');
 
 // get credentials from a file
 var config = require('./resources/arcgis_config.json');
@@ -10,62 +11,82 @@ var config = require('./resources/arcgis_config.json');
 // place to save AW Levels
 var awLevels = {};
 
-// save the token for subesquent calls in the same run
-var token;
+// consolidate error handling
+const handleErrors = function (err, res, data, callback) {
 
-// get a token
-var getToken = function (callback) {
+  // if a Node error is encountered
+  if (err) {
+    new Error(err);
 
-  // if the token already exists, just send it
-  if (token) {
-    callback(token);
+    // if the status code is anything other than 200, usually indicates a problem with the service
+  } else if (res.statusCode != 200) {
+    new Error(data);
+
+    // if the body contains an error response in the body - commonly how with ArcGIS reports errors
+  } else if (data.error) {
+    new Error(data.error);
+
   } else {
+    callback(data);
 
-    // make the request to get the token
-    request({
-      uri: 'https://www.arcgis.com/sharing/rest/generateToken',
-      method: 'post',
-      form: {
-        username: config.credentials.username,
-        password: config.credentials.password,
-        client: 'requestip',
-        expiration: 60,
-        f: 'json'
-      }
-    }, function (err, res, body) {
-
-      // if everything is good to go
-      if (!err && res.statusCode == 200 && !body.error) {
-
-        // write the token to the varaible
-        token = JSON.parse(body).token;
-
-        // invoke the callback
-        callback(token);
-      }
-    });
   }
 };
+
+// update the reach hydroline levels
+var pushHydrolineLevels = function () {
+
+  // create a request object with some defaults for the reach points
+  var reachHydrolineRequest = request.defaults({
+    baseUrl: config.featureServices.reachLine,  // url stored in config file
+    json: true
+  });
+
+  // call the push levels function with the request for hydrolines
+  pushLevels(reachHydrolineRequest, function () {
+    console.log('Successfully updated hydroline levels.');
+  });
+};
+exports.pushHydrolineLevels = pushHydrolineLevels;
+
+// update reach point levels
+var pushPointLevels = function () {
+
+  // create a request object with some defaults for the reach points
+  var reachPointRequest = request.defaults({
+    baseUrl: config.featureServices.reachPoint,  // url stored in config file
+    json: true
+  });
+
+  // call the push levels function with the request for hydrolines
+  pushLevels(reachPointRequest, function () {
+    console.log('Successfully updated point levels.');
+  });
+};
+exports.pushPointLevels = pushPointLevels;
 
 // get the maximum number of records returned in a single rest call with attributes
 var pushLevels = function (requestObject, callback) {
 
-  getToken(function (accessToken) {
+  // get a user token
+  arcgisSecurity.getUserToken(config.credentials.username, config.credentials.password, function (accessToken) {
 
-    // get the maximum number of records to be returned for a request with attributes
-    requestObject({
+    const options = {
       uri: '',
       qs: {
         f: 'json',
         token: accessToken
       }
-    }, function (err, res, body) {
+    };
 
-      if (!err && res.statusCode == 200 && !body.error){
+    // get the maximum number of records to be returned for a request with attributes
+    requestObject(options, function (err, res, body) {
+
+      // manage errors
+      handleErrors(err, res, body, function (data) {
 
         // pull the max records out of the JSON response
-        pushFeatureBlocks(requestObject, accessToken, body.maxRecordCount, callback);
-      }
+        pushFeatureBlocks(requestObject, accessToken, data.maxRecordCount, callback);
+      })
     });
   });
 };
@@ -73,8 +94,7 @@ var pushLevels = function (requestObject, callback) {
 // create a dictionary of key as reachid and value as objectid
 var pushFeatureBlocks = function (requestObject, accessToken, maxRecordCount, callback) {
 
-  // since the only full list returned will be all the object ids, get this full list
-  requestObject({
+  const options = {
     uri: 'query',
     method: 'post',
     form: {
@@ -83,13 +103,16 @@ var pushFeatureBlocks = function (requestObject, accessToken, maxRecordCount, ca
       where: '1=1',
       returnIdsOnly: true
     }
-  }, function (err, res, body) {
+  };
 
-    // if everything a-ok
-    if (!err && res.statusCode == 200 && !body.error) {
+  // since the only full list returned will be all the object ids, get this full list
+  requestObject(options, function (err, res, body) {
+
+    // if some sort of error is encountered
+    handleErrors(err, res, body, function(data){
 
       // save a couple of properties, the object id list, and the number of blocks needed to get all features
-      var objectIdList = body.objectIds;
+      var objectIdList = data.objectIds;
       var blockCount = Math.ceil(objectIdList.length / maxRecordCount);
 
       // iterate the number of blocks
@@ -101,15 +124,14 @@ var pushFeatureBlocks = function (requestObject, accessToken, maxRecordCount, ca
         // call push single hash
         pushFeatureBlock(requestObject, accessToken, objectIds, callback);
       }
-    }
+    });
   });
 };
 
 // push a single hash block
 var pushFeatureBlock = function (requestObject, accessToken, objectIds, callback) {
 
-  // get the object id's and associated reach id's for this block of river reaches
-  requestObject({
+  const options = {
     uri: 'query',
     method: 'post',
     form: {
@@ -121,14 +143,16 @@ var pushFeatureBlock = function (requestObject, accessToken, objectIds, callback
       returnGeometry: false,
       returnIdsOnly: false
     }
-  }, function (err, res, body) {
+  };
 
-    // ensure we get something valid back
-    if (!err && res.statusCode == 200 && !body.error) {
+  // get the object id's and associated reach id's for this block of river reaches
+  requestObject(options, function (err, res, body) {
+
+    handleErrors(err, res, body, function(data){
 
       // send the features to the level update function
-      pushLevelsToFeatureService(requestObject, accessToken, body.features, callback)
-    }
+      pushLevelsToFeatureService(requestObject, accessToken, data.features, callback)
+    });
   });
 };
 
@@ -153,7 +177,6 @@ var getAwLevels = function (callback) {
       callback(awLevels);
     });
   }
-
 };
 
 // push updated levels to the feature service
@@ -180,8 +203,7 @@ var pushLevelsToFeatureService = function (requestObject, accessToken, features,
       }
     }
 
-    // use the updated features list to update the feature service
-    requestObject({
+    const options = {
       uri: 'applyEdits',
       method: 'post',
       form: {
@@ -191,19 +213,16 @@ var pushLevelsToFeatureService = function (requestObject, accessToken, features,
         rollbackOnFailure: true,
         useGlobalIds: false
       }
-    }, function (err, res, body) {
+    };
 
-      // if good to go
-      if (!err && res.statusCode == 400 && !body.error) {
+    // use the updated features list to update the feature service
+    requestObject(options, function (err, res, body) {
 
-        // TODO: convert this into a function that can be used to provide a cloudwatch success message
-        callback(body);
+      handleErrors(err, res, body, function(data){
 
-      }
+        // invoke the callback...life is good
+        callback(data);
+      });
     });
   });
 };
-
-
-// TODO: revise
-exports.pushLevels = pushLevels;
