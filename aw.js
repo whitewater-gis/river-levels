@@ -1,5 +1,4 @@
 /* global require, module */
-'use strict';
 
 // import modules
 var request = require('request');
