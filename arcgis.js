@@ -68,7 +68,8 @@ exports.pushPointLevels = pushPointLevels;
 var pushLevels = function (requestObject, callback) {
 
   // get a user token
-  arcgisSecurity.getUserToken(config.credentials.username, config.credentials.password, function (accessToken) {
+  arcgisSecurity.getUserToken(
+    config.arcgisCredentials.username, config.arcgisCredentials.password, function (accessToken) {
 
     const options = {
       uri: '',
