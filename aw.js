@@ -1,5 +1,4 @@
 /* global require, module */
-'use strict';
 
 // import modules
 var request = require('request');
@@ -72,17 +71,17 @@ var getReachLevels = function (callback) {
 };
 exports.getReachLevels = getReachLevels;
 
-// iterate the states and create a master states list
-var getStateList = function (callback) {
+// iterate the states and create a master states crosstabs lookup object
+var getStatesObject = function (callback) {
 
   // a place to put the results
-  var stateListResult = [];
+  var stateDictionary = {};
 
   // track completed requests
   var completed_requests = 0;
 
   // iterate the list of states
-  stateList.forEach( function(state) {
+  stateList.forEach(function (state) {
 
     // create request options
     var options = {
@@ -94,29 +93,31 @@ var getStateList = function (callback) {
     // make request
     request(options, function (err, res, body) {
 
-      // for every reach in the response
-      body.forEach( function(reach) {
+      // ensure the request is valid
+      if (!err && res.statusCode == 200) {
 
-          // add the state to the list
-          stateListResult.push({
-            abbreviation: state,
-            awState: reach.state
-          });
-      });
+        // for every reach in the response
+        body.forEach(function (reach) {
+
+          // if there is a match
+          if (reach.state) {
+
+            // add the state to the list
+            stateDictionary[state] = reach.state;
+          }
+        });
+      }
 
       // iterate the completed request counter
       completed_requests++;
 
       // if at the end, process results
-      if (completed_requests == stateListResult.length) {
-
-        // create a list of unique states
-        var uniqueStateList = _.uniq(stateListResult.sort);
+      if (completed_requests == stateList.length) {
 
         // invoke the callback and pass back the state list
-        callback(uniqueStateList.sorted());
+        callback(stateDictionary);
       }
     });
   });
 };
-exports.getStateList = getStateList;
+exports.getStatesObject = getStatesObject;
