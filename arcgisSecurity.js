@@ -1,4 +1,4 @@
-/* global require */
+/* global require, exports */
 
 // import modules
 const request = require('request');
