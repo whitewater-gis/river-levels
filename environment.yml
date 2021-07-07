@@ -5,9 +5,7 @@ channels:
   - conda-forge
 
 dependencies:
-  - beautifulsoup
+  - beautifulsoup4
   - esri::arcgis
   - python=3.7
   - requests
-  - pip:
-    - azure-storage-blob
