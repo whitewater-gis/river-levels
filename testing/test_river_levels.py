@@ -16,5 +16,8 @@ dir_src = dir_prj/'src'
 sys.path.insert(0, str(dir_src))
 import river_levels
 
-def test_example():
-    assert 2 + 2 == 4
+deschutes_id = '12080010'
+
+def test_get_usgs_gauge():
+    obs = river_levels.Gauge.get_observation(id=deschutes_id, source='USGS')
+    assert(obs)
