@@ -5,38 +5,11 @@ channels:
   - conda-forge
 
 dependencies:
-  - arcgis
-  - cookiecutter
-  - dask
-  - fiona
-  - h3-py
+  - esri::arcpy
+  - beautifulsoup
+  - esri::arcgis
   - jupyterlab
-  - mkdocs
-  - munch
-  - nodejs
-  - pip
-  - progress
-  - conda-forge::pyarrow
-  - pytest
   - python=3.7
-  - python-dotenv
-  - pyyaml
-  - scipy
-  - scikit-learn
-  - seaborn
-  - shapely
-  - swifter
-  - tabulate
-  - tqdm
+  - requests
   - pip:
     - azure-storage-blob
-    - boto3
-    - bump2version
-    - ipykernel
-    - placekey
-    - sphinx
-    - sphinx-autodoc-typehints
-    - sphinx_rtd_theme
-    - tox
-    - tox-conda
-    - twine
