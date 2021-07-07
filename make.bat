@@ -57,7 +57,7 @@ GOTO %1
     ENDLOCAL & (
 
         :: Create new environment from environment file
-        CALL conda env create -f environment_dev.yml
+        CALL conda env create -f environment.yml
 
         :: Install the local package in development (experimental) mode
         CALL python -m pip install -e .
@@ -129,8 +129,7 @@ GOTO %1
 :: Run all tests in module
 :test
 	ENDLOCAL & (
-		activate "%ENV_NAME%"
-		pytest testing/
+		tox
 	)
 	EXIT /B
 
