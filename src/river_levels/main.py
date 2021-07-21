@@ -194,7 +194,7 @@ class Gauge(object):
         ret_keys = [val for val in list(next(iter(ret_val.items()))[1].keys())]
         not_ret_lst = [mtrc for mtrc in metrics if mtrc not in ret_keys]
         if len(not_ret_lst):
-            warn(f'Although requested, {", ".join(not_ret_lst)}, does not appear to be available at this site.')
+            warn(f'Although requested, {", ".join(not_ret_lst)} does not appear to be available at this site.')
 
         # if a dataframe is desired, create it
         if return_dataframe:
