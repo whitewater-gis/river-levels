@@ -4,4 +4,6 @@ __author__ = 'Joel McCune (https://github.com/knu2xs)'
 __license__ = 'Apache 2.0'
 __copyright__ = 'Copyright 2020 by Joel McCune (https://github.com/knu2xs)'
 
-# __all__ = ['example_function', 'ExampleObject']
+__all__ = ['Gauge']
+
+from .main import Gauge
