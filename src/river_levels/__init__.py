@@ -1,5 +1,5 @@
 __title__ = 'river-levels'
-__version__ = '0.2.0'
+__version__ = '0.2.1-dev0'
 __author__ = 'Joel McCune (https://github.com/knu2xs)'
 __license__ = 'Apache 2.0'
 __copyright__ = 'Copyright 2020 by Joel McCune (https://github.com/knu2xs)'

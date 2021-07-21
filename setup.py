@@ -7,7 +7,7 @@ setup(
     name='river_levels',
     package_dir={"": "src"},
     packages=find_packages('src'),
-    version='0.2.0',
+    version='0.2.1-dev0',
     description='Tooling for checking river levels.',
     long_description=long_description,
     author='Joel McCune (https://github.com/knu2xs)',
