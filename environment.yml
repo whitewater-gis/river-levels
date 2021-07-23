@@ -8,8 +8,11 @@ dependencies:
   - beautifulsoup4
   - arcgis
   - pandas
+  - pip
   - python=3.7
   - python-dateutil
   - python-dotenv
   - pytz
   - requests
+  - pip:
+      - tsmoothie

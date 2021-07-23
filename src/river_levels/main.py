@@ -5,6 +5,7 @@ from warnings import warn
 
 from dateutil.relativedelta import relativedelta
 import pandas as pd
+import pytz
 import requests
 
 __all__ = ['Gauge']
@@ -95,12 +96,15 @@ class Gauge(object):
             'temperature': '00010'
         }
 
-        # if a string provided, convert metrics to list and ensure lowercase
-        mtrc_lst = [metrics] if isinstance(metrics, str) else metrics
-        mtrc_lst = [mtrc_dict[mtrc.lower()] for mtrc in mtrc_lst]
+        # if a string provided, convert metrics to list and ensure all lowercase
+        metrics = [metrics] if isinstance(metrics, str) else metrics
+        metrics = [m.lower() for m in metrics]
 
         # account for flow being used in lieu of cfs
-        mtrc_lst = ['cfs' if m == 'flow' else m for m in mtrc_lst]
+        metrics = ['cfs' if m == 'flow' else m for m in metrics]
+
+        # look up the metric codes
+        mtrc_lst = [mtrc_dict[mtrc] for mtrc in metrics]
 
         # add metric codes onto payload as comma separated string
         data['parameterCd'] = ','.join(mtrc_lst)
@@ -199,5 +203,17 @@ class Gauge(object):
         # if a dataframe is desired, create it
         if return_dataframe:
             ret_val = pd.DataFrame.from_dict(ret_val, orient='index')
+
+            # get the applicable timezone
+            dt_dict = {
+                'PST': 'US/Pacific',
+                'AKST': 'US/Alaska',
+                'EST': 'US/Eastern',
+                'MST': 'US/Mountain',
+                'CST': 'US/Central'
+            }
+            tz_nm = dt_dict[ts['sourceInfo']['timeZoneInfo']['defaultTimeZone']['zoneAbbreviation']]
+
+            ret_val.index = [dt.astimezone(pytz.timezone(tz_nm)) for dt in ret_val.index]
 
         return ret_val
