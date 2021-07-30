@@ -243,6 +243,10 @@ class Gauge(object):
         obs = self.get_observations(period=period, period_count=period_count, metrics=metric, start_date=start_date,
                                     end_date=end_date)
 
+        # standardize the dataframe
+        obs.rename(columns={metric: 'flow'}, inplace=True)
+
+
         # calculate the mean and standard deviation over a rolling window
         mean_df = obs[metric].rolling(rolling_window).mean()
         std_df = obs[metric].rolling(rolling_window).std()
@@ -251,33 +255,36 @@ class Gauge(object):
         obs_join = obs.join(mean_df, rsuffix='_mean').join(std_df, rsuffix='_std')
 
         # calculate a curve one standard deviation above and below the mean
-        obs_join[f'{metric}_plus_std'] = obs_join[f'{metric}_mean'] + obs_join[f'{metric}_std']
-        obs_join[f'{metric}_less_std'] = obs_join[f'{metric}_mean'] - obs_join[f'{metric}_std']
+        obs_join[f'flow_plus_std'] = obs_join[f'flow_mean'] + obs_join[f'flow_std']
+        obs_join[f'flow_less_std'] = obs_join[f'flow_mean'] - obs_join[f'flow_std']
 
         # drop out leap year days
         obs_nrml = obs_join[~((obs_join.index.month == 2) & (obs_join.index.day == 29))].copy()
-        obs_nrml['joinstamp'] = [val.replace(year=1973) for val in obs_nrml.index]
+        obs_nrml['timestamp'] = [val.replace(year=1973) for val in obs_nrml.index]
 
         # tack on values for the preceeding and trailing months to ensure the curve covers an entire year
         lead_obs = obs_nrml[obs_nrml.index.month == 12].copy()
-        lead_obs['joinstamp'] = [val.replace(year=1972) for val in lead_obs.index]
+        lead_obs['timestamp'] = [val.replace(year=1972) for val in lead_obs.index]
         lag_obs = obs_nrml[obs_nrml.index.month == 1].copy()
-        lag_obs['joinstamp'] = [val.replace(year=1973) for val in lag_obs.index]
+        lag_obs['timestamp'] = [val.replace(year=1973) for val in lag_obs.index]
         obs_nrml = pd.concat([obs_nrml, lead_obs, lag_obs])
 
         # create an average curve table for one year
-        mean_cols = [f'{metric}_mean', f'{metric}_plus_std', f'{metric}_less_std', 'joinstamp']
-        mean_df = obs_nrml[mean_cols].groupby('joinstamp').mean()
+        mean_cols = [f'flow_mean', f'flow_plus_std', f'flow_less_std', 'timestamp']
+        mean_df = obs_nrml[mean_cols].groupby('timestamp').mean()
 
         # if min and max range flows are provided, add them
         if min is not None:
-            mean_df[f'{metric}_bott'] = min
+            mean_df[f'flow_bott'] = min
         if max is not None:
-            mean_df[f'{metric}_top'] = max
+            mean_df[f'flow_top'] = max
+
+        # consolidate into days...because nobody wants needs every 15 minutes for an entire year
+        mean_df = mean_df.groupby(pd.Grouper(freq='D')).mean()
 
         # if smoothing the curve (a VERY good idea), do it
         if apply_smoothing:
-            mean_df = mean_df.rolling(window=500).mean()
+            mean_df = mean_df.rolling(window=5).mean()
             mean_df = mean_df[mean_df.index.year == 1973].copy()
 
         return mean_df

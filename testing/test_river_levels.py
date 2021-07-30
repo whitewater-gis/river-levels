@@ -17,8 +17,8 @@ dir_src = dir_prj / 'src'
 # sys.path.insert(0, str(dir_src))
 import river_levels
 
-#usgs_id = '01646500'  # potomac since has both cfs and temp
-usgs_id = '14224000' # ohane
+usgs_id = '01646500'  # potomac since has both cfs and temp
+# usgs_id = '14224000' # ohane
 
 
 def test_get_usgs_gauge():

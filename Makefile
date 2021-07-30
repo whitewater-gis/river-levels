@@ -25,9 +25,13 @@ clean:
 
 ## Build the local environment from the environment file
 env:
-	conda env create -f environment_dev_nix.yml
+	conda env create -f environment.yml
 	conda run -n $(PROJECT_NAME) python -m pip install -e .
 	@echo ">>> New conda environment, $(ENV_NAME), created. Activate with:\n- conda activate $(ENV_NAME)"
+
+## run notebooks
+jupyter:
+	conda run -n $(PROJECT_NAME) "jupyter lab"
 
 # If working in an EC2 environment, set everything up - BETA FEATURE
 ec2:
