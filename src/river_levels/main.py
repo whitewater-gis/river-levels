@@ -248,8 +248,8 @@ class Gauge(object):
 
 
         # calculate the mean and standard deviation over a rolling window
-        mean_df = obs[metric].rolling(rolling_window).mean()
-        std_df = obs[metric].rolling(rolling_window).std()
+        mean_df = obs['flow'].rolling(rolling_window).mean()
+        std_df = obs['flow'].rolling(rolling_window).std()
 
         # combine the means and standard deviations
         obs_join = obs.join(mean_df, rsuffix='_mean').join(std_df, rsuffix='_std')
@@ -285,6 +285,7 @@ class Gauge(object):
         # if smoothing the curve (a VERY good idea), do it
         if apply_smoothing:
             mean_df = mean_df.rolling(window=5).mean()
-            mean_df = mean_df[mean_df.index.year == 1973].copy()
+
+        mean_df = mean_df[mean_df.index.year == 1973].copy()
 
         return mean_df
